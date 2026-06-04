@@ -1,4 +1,5 @@
 # Zerodha Stock Trading Platform
+https://stockp-frontend.onrender.com
 
 A full-stack stock trading platform with a landing page, user dashboard, and backend API.
 
