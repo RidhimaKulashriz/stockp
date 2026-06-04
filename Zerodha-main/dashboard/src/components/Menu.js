@@ -8,10 +8,37 @@ const Menu = () => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const userData = localStorage.getItem("user");
-    if (userData) {
-      setUser(JSON.parse(userData));
-    }
+    const fetchUserData = async () => {
+      // First check localStorage
+      const userData = localStorage.getItem("user");
+      if (userData) {
+        setUser(JSON.parse(userData));
+        return;
+      }
+
+      // If not in localStorage, check URL for token
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get("token");
+      
+      if (token) {
+        try {
+          const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3012";
+          const response = await fetch(`${API_URL}/user/profile?token=${token}`);
+          if (response.ok) {
+            const userData = await response.json();
+            setUser(userData);
+            localStorage.setItem("user", JSON.stringify(userData));
+            localStorage.setItem("token", token);
+            // Clean URL by removing token parameter
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        } catch (error) {
+          console.error("Failed to fetch user profile:", error);
+        }
+      }
+    };
+
+    fetchUserData();
   }, []);
 
   const handleMenuClick = (index) => {

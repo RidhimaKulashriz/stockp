@@ -193,6 +193,10 @@ app.post("/login", async (req, res) => {
 
     const token = "simple-token-" + Date.now();
     
+    // Store token in user document for validation
+    user.token = token;
+    await user.save();
+    
     res.json({
       message: "Login successful",
       token,
@@ -205,6 +209,31 @@ app.post("/login", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Login failed" });
+  }
+});
+
+app.get("/user/profile", async (req, res) => {
+  try {
+    const token = req.query.token;
+    
+    if (!token) {
+      return res.status(401).json({ error: "Token is required" });
+    }
+
+    const user = await UserModel.findOne({ token });
+
+    if (!user) {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+
+    res.json({
+      id: user._id,
+      username: user.username,
+      email: user.email,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch user profile" });
   }
 });
 

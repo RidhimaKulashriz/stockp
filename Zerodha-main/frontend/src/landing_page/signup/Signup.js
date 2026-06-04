@@ -37,7 +37,7 @@ function Signup() {
         if (isLogin) {
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user));
-          window.location.href = DASHBOARD_URL;
+          window.location.href = `${DASHBOARD_URL}?token=${data.token}`;
         } else {
           alert("Signup successful! Please login.");
           setIsLogin(true);
