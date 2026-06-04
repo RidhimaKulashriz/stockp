@@ -1,0 +1,11 @@
+console.log("1: Requiring webpack...");
+require('webpack');
+console.log("2: Requiring html-webpack-plugin...");
+require('html-webpack-plugin');
+console.log("3: Requiring eslint-webpack-plugin...");
+require('eslint-webpack-plugin');
+console.log("4: Requiring react-refresh-webpack-plugin...");
+require('@pmmmwh/react-refresh-webpack-plugin');
+console.log("5: Requiring babel-preset-react-app...");
+require.resolve('babel-preset-react-app');
+console.log("6: Done!");
