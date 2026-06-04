@@ -29,6 +29,13 @@ app.use(bodyParser.json());
 // GET /addHoldings - seeds the Holdings collection with sample data
 app.get("/addHoldings", async (req, res) => {
   try {
+    const token = req.query.token;
+    const userId = await validateToken(token);
+    
+    if (!userId) {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+
     const tempHoldings = [
       { name: "BHARTIARTL", qty: 2, avg: 538.05, price: 541.15, net: "+0.58%", day: "+2.99%" },
       { name: "HDFCBANK", qty: 2, avg: 1383.4, price: 1522.35, net: "+10.04%", day: "+0.11%" },
@@ -48,9 +55,10 @@ app.get("/addHoldings", async (req, res) => {
     // Avoid duplicates: clear existing holdings first? Or check each. Let's insert only if not present.
     let insertedCount = 0;
     for (const item of tempHoldings) {
-      const exists = await HoldingsModel.findOne({ name: item.name });
+      const exists = await HoldingsModel.findOne({ name: item.name, userId });
       if (!exists) {
         await new HoldingsModel({
+          userId,
           name: item.name,
           qty: item.qty,
           avg: item.avg,
@@ -72,6 +80,13 @@ app.get("/addHoldings", async (req, res) => {
 // GET /addPositions - seeds the Positions collection with sample data
 app.get("/addPositions", async (req, res) => {
   try {
+    const token = req.query.token;
+    const userId = await validateToken(token);
+    
+    if (!userId) {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+
     const tempPositions = [
       { product: "CNC", name: "EVEREADY", qty: 2, avg: 316.27, price: 312.35, net: "+0.58%", day: "-1.24%", isLoss: true },
       { product: "CNC", name: "JUBLFOOD", qty: 1, avg: 3124.75, price: 3082.65, net: "+10.04%", day: "-1.35%", isLoss: true },
@@ -79,9 +94,10 @@ app.get("/addPositions", async (req, res) => {
 
     let insertedCount = 0;
     for (const item of tempPositions) {
-      const exists = await PositionsModel.findOne({ name: item.name });
+      const exists = await PositionsModel.findOne({ name: item.name, userId });
       if (!exists) {
         await new PositionsModel({
+          userId,
           product: item.product,
           name: item.name,
           qty: item.qty,
@@ -103,9 +119,23 @@ app.get("/addPositions", async (req, res) => {
 
 // ---------------------- Regular API Routes ----------------------
 
+// Helper function to validate token and get userId
+const validateToken = async (token) => {
+  if (!token) return null;
+  const user = await UserModel.findOne({ token });
+  return user ? user._id.toString() : null;
+};
+
 app.get("/allHoldings", async (req, res) => {
   try {
-    const allHoldings = await HoldingsModel.find({});
+    const token = req.query.token;
+    const userId = await validateToken(token);
+    
+    if (!userId) {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+    
+    const allHoldings = await HoldingsModel.find({ userId });
     res.json(allHoldings);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch holdings" });
@@ -114,7 +144,14 @@ app.get("/allHoldings", async (req, res) => {
 
 app.get("/allPositions", async (req, res) => {
   try {
-    const allPositions = await PositionsModel.find({});
+    const token = req.query.token;
+    const userId = await validateToken(token);
+    
+    if (!userId) {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+    
+    const allPositions = await PositionsModel.find({ userId });
     res.json(allPositions);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch positions" });
@@ -142,6 +179,8 @@ app.post("/signup", async (req, res) => {
   try {
     const { username, email, password } = req.body;
     
+    console.log("SIGNUP REQUEST - Username:", username, "Email:", email);
+    
     if (!username || !email || !password) {
       return res.status(400).json({ error: "All fields are required" });
     }
@@ -164,7 +203,9 @@ app.post("/signup", async (req, res) => {
 
     await newUser.save();
 
-    res.status(201).json({ message: "User created successfully" });
+    console.log("USER CREATED - Username:", newUser.username, "Email:", newUser.email);
+    
+    res.status(201).json({ message: "User created successfully", username: newUser.username });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to create user" });
@@ -174,6 +215,8 @@ app.post("/signup", async (req, res) => {
 app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
+    
+    console.log("LOGIN REQUEST - Email:", email);
     
     if (!email || !password) {
       return res.status(400).json({ error: "Email and password are required" });
@@ -197,6 +240,8 @@ app.post("/login", async (req, res) => {
     user.token = token;
     await user.save();
     
+    console.log("LOGIN SUCCESS - Username:", user.username, "Email:", user.email);
+    
     res.json({
       message: "Login successful",
       token,
@@ -216,6 +261,8 @@ app.get("/user/profile", async (req, res) => {
   try {
     const token = req.query.token;
     
+    console.log("USER PROFILE REQUEST - Token:", token);
+    
     if (!token) {
       return res.status(401).json({ error: "Token is required" });
     }
@@ -226,6 +273,8 @@ app.get("/user/profile", async (req, res) => {
       return res.status(401).json({ error: "Invalid token" });
     }
 
+    console.log("USER PROFILE RETURNED - Username:", user.username, "Email:", user.email);
+    
     res.json({
       id: user._id,
       username: user.username,
