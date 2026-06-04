@@ -1,8 +1,20 @@
-import React from "react";
-
-import { positions } from "../data/data";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
 const Positions = () => {
+  const [positions, setPositions] = useState([]);
+
+  useEffect(() => {
+    const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3012";
+    const token = localStorage.getItem("token");
+    const url = token ? `${API_URL}/allPositions?token=${token}` : `${API_URL}/allPositions`;
+    axios.get(url).then((res) => {
+      setPositions(res.data);
+    }).catch((err) => {
+      console.error("Failed to fetch positions:", err);
+    });
+  }, []);
+
   return (
     <>
       <h3 className="title">Positions ({positions.length})</h3>

@@ -9,32 +9,43 @@ const Menu = () => {
 
   useEffect(() => {
     const fetchUserData = async () => {
-      // First check localStorage
-      const userData = localStorage.getItem("user");
-      if (userData) {
-        setUser(JSON.parse(userData));
-        return;
-      }
-
-      // If not in localStorage, check URL for token
+      // Check URL for token first (takes priority over localStorage)
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get("token");
+      console.log("Token from URL:", token);
       
       if (token) {
+        // Clear old localStorage data when new token is provided
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+        
         try {
           const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3012";
+          console.log("Fetching user profile from:", `${API_URL}/user/profile?token=${token}`);
           const response = await fetch(`${API_URL}/user/profile?token=${token}`);
+          console.log("Response status:", response.status);
           if (response.ok) {
             const userData = await response.json();
+            console.log("User data received:", userData);
             setUser(userData);
             localStorage.setItem("user", JSON.stringify(userData));
             localStorage.setItem("token", token);
             // Clean URL by removing token parameter
             window.history.replaceState({}, document.title, window.location.pathname);
+            return;
+          } else {
+            console.error("Failed to fetch user profile. Status:", response.status);
           }
         } catch (error) {
           console.error("Failed to fetch user profile:", error);
         }
+      }
+
+      // If no token in URL, check localStorage
+      const userData = localStorage.getItem("user");
+      console.log("localStorage user data:", userData);
+      if (userData) {
+        setUser(JSON.parse(userData));
       }
     };
 

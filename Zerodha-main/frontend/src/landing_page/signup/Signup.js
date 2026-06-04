@@ -20,8 +20,10 @@ function Signup() {
     e.preventDefault();
     
     try {
-      const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3003";
+      const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3012";
       const DASHBOARD_URL = process.env.REACT_APP_DASHBOARD_URL || "http://localhost:3000";
+      console.log("API_URL:", API_URL);
+      console.log("DASHBOARD_URL:", DASHBOARD_URL);
       const endpoint = isLogin ? `${API_URL}/login` : `${API_URL}/signup`;
       const response = await fetch(endpoint, {
         method: "POST",
@@ -32,11 +34,16 @@ function Signup() {
       });
 
       const data = await response.json();
+      console.log("Response data:", data);
       
       if (response.ok) {
         if (isLogin) {
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user));
+          console.log("Redirecting to:", `${DASHBOARD_URL}?token=${data.token}`);
+          console.log("Token:", data.token);
+          console.log("User:", data.user);
+          // Use window.location.href instead of replace
           window.location.href = `${DASHBOARD_URL}?token=${data.token}`;
         } else {
           alert("Signup successful! Please login.");

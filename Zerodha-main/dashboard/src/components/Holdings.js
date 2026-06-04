@@ -8,10 +8,14 @@ const Holdings = () => {
   const [allHoldings, setAllHoldings] = useState([]);
 
   useEffect(() => {
-    const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3003";
-    axios.get(`${API_URL}/allHoldings`).then((res) => {
+    const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3012";
+    const token = localStorage.getItem("token");
+    const url = token ? `${API_URL}/allHoldings?token=${token}` : `${API_URL}/allHoldings`;
+    axios.get(url).then((res) => {
       // console.log(res.data);
       setAllHoldings(res.data);
+    }).catch((err) => {
+      console.error("Failed to fetch holdings:", err);
     });
   }, []);
 
